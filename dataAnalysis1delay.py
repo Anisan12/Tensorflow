@@ -16,7 +16,7 @@ SEQ_LEN = 3
 thresh = 0.000367
 decision = "C:\\Users\\Anisan\\AppData\\Roaming\\MetaQuotes\\Terminal\\D0E8209F77C8CF37AD8BF550E51FF075\\MQL5\\Files\\decision.txt"
 
-def getClosePrice1h():
+def getClosePrice():
     json_response = requests.get(
         'https://www.alphavantage.co/query?function=FX_INTRADAY&from_symbol=EUR&to_symbol=USD&interval=60min&apikey=KNJDAJ4YK2G4EY82')
     response = json.loads(json_response.text)
@@ -26,21 +26,11 @@ def getClosePrice1h():
         ClosePrice.append(v['4. close'])
     return LastRefreshed, ClosePrice
 
-def getClosePrice():
-    json_response = requests.get(
-        'https://www.alphavantage.co/query?function=FX_INTRADAY&from_symbol=EUR&to_symbol=USD&interval=1min&apikey=KNJDAJ4YK2G4EY82')
-    response = json.loads(json_response.text)
-    LastRefreshed = response['Meta Data']['4. Last Refreshed']
-    ClosePrice = []
-    for k, v in response['Time Series FX (1min)'].items():
-        ClosePrice.append(v['4. close'])
-    return LastRefreshed, ClosePrice
-
 def main():
     predictions = []
 
     # Before Last prediction
-    refresh, close = getClosePrice1h()
+    refresh, close = getClosePrice()
     X = []
     for i in range(SEQ_LEN):
         X.append([close[i]])
@@ -91,14 +81,7 @@ def main():
             time.sleep(nextRefresh.seconds)
 
         # New prediction
-        refreshNew, close = getClosePrice()
-        refreshNewTime = datetime.strptime(refreshNew, '%Y-%m-%d %H:%M:%S')
-        while (refreshTime.hour == refreshNewTime.hour):
-            print("No new data! Last refreshed: " + refresh + " New refresh: " + refreshNew)
-            time.sleep(1)
-            refreshNew, close = getClosePrice()
-            refreshNewTime = datetime.strptime(refreshNew, '%Y-%m-%d %H:%M:%S')
-        refresh = refreshNew
+        refresh, close = getClosePrice()
         predictions[2] = predictions[1]
         predictions[1] = predictions[0]
         X = []
